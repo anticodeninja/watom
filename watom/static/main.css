@@ -1,0 +1,41 @@
+body {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+pre {
+    display: block;
+    padding: 5px 5px 5px 15px;
+}
+
+img {
+    max-width: 100%;
+}
+
+table {
+    max-width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+.admonition {
+    padding: 5px 5px 5px 15px;
+}
+
+@media screen {
+    body {
+        background: #fdf6e3;
+        color: #073642;
+    }
+
+    pre {
+        background: #eee8d5;
+    }
+
+    .admonition {
+        background: #eee8d5;
+    }
+}

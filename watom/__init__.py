@@ -46,6 +46,27 @@ class Page:
         with open(self.target, 'r', encoding='utf8') as input_file:
             return self.ext(input_file.read())
 
+    def get_static(self, handler, path):
+        path = os.path.realpath(os.path.join(self.basedir, *path))
+
+        if path.startswith(self.basedir) and os.path.exists(path):
+            mime_type, encoding = mimetypes.guess_type(path)
+            if encoding == "gzip":
+                content_type = "application/gzip"
+            elif encoding is not None:
+                content_type = "application/octet-stream"
+            elif mime_type is not None:
+                content_type = mime_type
+            else:
+                content_type = "application/octet-stream"
+            handler.set_header("Content-Type", content_type)
+
+            with open(path, 'rb') as input_file:
+                handler.write(input_file.read())
+                return True
+
+        return False
+
 
 class FileChangedHandler(FileSystemEventHandler):
     def __init__(self, page):
@@ -73,32 +94,14 @@ class PageHandler(tornado.web.RequestHandler):
             return
 
         page_id = page_id.split('/')
-        if len(page_id) == 1:
-            page = pages.get('', None)
-        else:
+        if len(page_id) > 1:
             page = pages.get(page_id[0], None)
-            del page_id[0]
+            if page and page.get_static(self, page_id[1:]):
+                return
 
-        if page:
-            path = os.path.realpath(os.path.join(page.basedir, *page_id))
-            if not path.startswith(page.basedir):
-                raise Exception('Incorrect path')
-
-            if os.path.exists(path):
-                mime_type, encoding = mimetypes.guess_type(path)
-                if encoding == "gzip":
-                    content_type = "application/gzip"
-                elif encoding is not None:
-                    content_type = "application/octet-stream"
-                elif mime_type is not None:
-                    content_type = mime_type
-                else:
-                    content_type = "application/octet-stream"
-                self.set_header("Content-Type", content_type)
-
-                with open(path, 'rb') as input_file:
-                    self.write(input_file.read())
-                    return
+        page = pages.get('', None)
+        if page and page.get_static(self, page_id):
+            return
 
         self.set_status(404)
         self.write('Ooops, something went wrong')
